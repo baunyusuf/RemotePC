@@ -1,7 +1,6 @@
 from threading import Thread
 import socket
 import os
-import pyautogui
 from arayüz import Pencere
 from PyQt5 import QtWidgets
 import sys
@@ -28,13 +27,13 @@ if __name__ == "__main__":
     client_baslat.start()
     app=QtWidgets.QApplication(sys.argv)
     pencere=Pencere()
-    pencere.kapat.clicked.connect(sil)
-    pencere.listele.clicked.connect(listele)
 
-
-
+    pencere.listelebtn.clicked.connect(listele)
 
     sys.exit(app.exec())
+        
+
+    
         
 
     
