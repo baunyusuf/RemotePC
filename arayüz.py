@@ -7,7 +7,7 @@ class Pencere(QWidget):
 
         self.init_ui()
     def init_ui(self):
-        self.Hedef_IP_Label=QLabel("Hedef İP: ")
+        self.Hedef_IP_Label=QLabel("Hedef İP'nin raddrsi(localhost kullanımı için): ")
         self.Hedef_IP_Line=QLineEdit()
         self.dosya_transferi=QRadioButton("Dosya Transferi")
         self.ekran_paylasimi=QRadioButton("Ekran Paylaşımı")
