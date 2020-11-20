@@ -2,9 +2,11 @@ import socket
 from threading import Thread
 import time
 import os
+import pickle
 
 
-clients=[]
+clients_thread=[]
+clients_ip=[]
 
 class Server(Thread):
     def __init__(self,host,port):
@@ -22,16 +24,19 @@ class Server(Thread):
             baglanti=soket.accept()[0]
             soket_calistir=Soket(baglanti,self)
             soket_calistir.start()
-            clients.append(soket_calistir)
-            print(clients)
-            print(len(clients))
+            clients_thread.append(soket_calistir)
+            clients_ip.append(baglanti.getpeername()[0])
+            print(clients_thread)
+            print(len(clients_thread))
     def baglanti_sil(self,kaynak):
-        clients.remove(kaynak)
-        print("kalan istemci:{}".format(clients))
-        print(len(clients))
+        clients_thread.remove(kaynak)
+        clients_ip.remove(kaynak.baglanti.getpeername()[0])
+        print("kalan istemci:{}".format(clients_thread))
+        print(len(clients_thread))
     def baglanti_liste_al(self,kaynak):
-        for i in clients:
-            print(i.baglanti.getpeername())
+        data=pickle.dumps(clients_ip)
+        print(data)
+        kaynak.baglanti.send(data)
     def baglanti_istegi(self,kaynak):
         pass
         
@@ -53,18 +58,10 @@ class Soket(Thread):
                 gelen_cevap=self.baglanti.recv(1024).decode("utf-8")
                 self.server.baglanti_istegi(gelen_cevap)
 
-                
-                
-
-                
 
 if __name__ == "__main__":
-    
     server=Server(host="127.0.0.1",port=6598)
     server.start()
 
-    
-    
-    
 
-            
+
