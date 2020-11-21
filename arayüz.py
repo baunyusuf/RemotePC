@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QRadioButton,QPushButton,QTextEdit,QVBoxLayout,QHBoxLayout
+from PyQt5.QtWidgets import QWidget,QLabel,QLineEdit,QRadioButton,QPushButton,QTextEdit,QVBoxLayout,QHBoxLayout,QApplication,QListWidget
 
 class Pencere(QWidget):
     def __init__(self):
@@ -7,6 +7,7 @@ class Pencere(QWidget):
 
         self.init_ui()
     def init_ui(self):
+        self.resize(1280, 500)
         self.Hedef_IP_Label=QLabel("Hedef İP'nin raddrsi(localhost kullanımı için): ")
         self.Hedef_IP_Line=QLineEdit()
         self.dosya_transferi=QRadioButton("Dosya Transferi")
@@ -14,7 +15,7 @@ class Pencere(QWidget):
         self.baglanbtn=QPushButton("Bağlan")
         self.listelebtn=QPushButton("Listele")
         self.kapatbtn=QPushButton("Çıkış")
-        self.textedit=QTextEdit()
+        self.list=QListWidget()
         hbox=QHBoxLayout()
         hbox2=QHBoxLayout()
         vbox=QVBoxLayout()
@@ -32,9 +33,12 @@ class Pencere(QWidget):
         vbox.addLayout(hbox2)
 
         hbox3.addLayout(vbox)
-        hbox3.addWidget(self.textedit)
+        hbox3.addWidget(self.list)
 
         self.setLayout(hbox3)
 
         self.show()
+
+
+
 

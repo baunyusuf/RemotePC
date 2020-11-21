@@ -38,8 +38,9 @@ class Server(Thread):
         data=pickle.dumps(clients_ip)
         print("Liste gönderildi")
         kaynak.baglanti.send(data)
-    def hedef_istemci_bul(self,kaynak):
-        pass
+    def data_al(self,kaynak):
+        print("Veri alımı başladı")
+        
 
 class Soket(Thread):
     def __init__(self,baglanti,server):
@@ -48,7 +49,6 @@ class Soket(Thread):
         self.server=server
     def run(self):
         try:
-
             while True:
                 gsecim=self.baglanti.recv(1024).decode("utf-8")
                 if gsecim=="Sil":
@@ -58,14 +58,14 @@ class Soket(Thread):
                 elif gsecim=="Baglan":
                     #hedef_istemci=#Client tan alınan hedef raddr alınmalı
                     self.baglanti.send("Server bağlantı isteğini aldı".encode("utf-8"))
-                    self.server.hedef_istemci_bul(self)
+                    self.server.data_al(self.baglanti)
         except (ConnectionRefusedError,ConnectionResetError):
             clients_thread.remove(self)
             
 
 
 if __name__ == "__main__":
-    server=Server(host="127.0.0.1",port=6598)
+    server=Server(host="127.0.0.1",port=3963)
     server.start()
 
 
