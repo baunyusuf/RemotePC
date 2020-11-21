@@ -5,6 +5,9 @@ from arayüz import Pencere
 from PyQt5 import QtWidgets
 import sys
 import pickle
+import time
+
+
 
 class Client(Thread):
     def __init__(self,host,port):
@@ -14,7 +17,7 @@ class Client(Thread):
         self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     def run(self):
         self.soket.connect((self.host,self.port))
-        
+            
 
 def kapat():
     sock_create.soket.send("Sil".encode("utf-8"))
@@ -28,19 +31,16 @@ def listele():
         for i in data:
             pencere.textedit.append(str(i))
             #print(tuple(i)[0])
-        
+            
     except:
         print("Server açık değil veya ulaşılamıyor")
 def baglan(radio1,radio2):
-    #print("Bağlana basıldı")
-    #sock_create.soket.send("Baglan".encode("utf-8"))
     try:
         if radio1:
+            sock_create.soket.send("Baglan".encode("utf-8"))
             print("Dosya Transferi seçildi")
-            a=int(pencere.Hedef_IP_Line.text())
-            print(type(a))
-            print(a)
-            #dosya_sec()
+            server_cevap=sock_create.soket.recv(2048).decode("utf-8")
+            print(server_cevap)
         elif radio2:
             print("Ekran Paylaşımı seçildi")
         else:
@@ -50,7 +50,7 @@ def baglan(radio1,radio2):
 
 def dosya_sec():
     dosya_ismi=QtWidgets.QFileDialog.getOpenFileName(pencere,"Dosya Seç",os.getenv("HOME"))
-    print(dosya_ismi)
+    return dosya_ismi
 
 if __name__ == "__main__":
     sock_create=Client(host="127.0.0.1",port=6598)
@@ -61,7 +61,8 @@ if __name__ == "__main__":
     pencere.listelebtn.clicked.connect(listele)
     pencere.baglanbtn.clicked.connect(lambda : baglan(pencere.dosya_transferi.isChecked(),pencere.ekran_paylasimi.isChecked()))
     pencere.kapatbtn.clicked.connect(kapat)
-    
+        
 
     if not app.exec():
         kapat()
+

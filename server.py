@@ -38,27 +38,31 @@ class Server(Thread):
         data=pickle.dumps(clients_ip)
         print("Liste gönderildi")
         kaynak.baglanti.send(data)
-    def baglanti_istegi(self,kaynak):
+    def hedef_istemci_bul(self,kaynak):
         pass
-        
+
 class Soket(Thread):
     def __init__(self,baglanti,server):
         super().__init__()
         self.baglanti=baglanti
         self.server=server
     def run(self):
-        while True:
-            gsecim=self.baglanti.recv(1024).decode("utf-8")
-            if gsecim=="Sil":
-                self.server.baglanti_sil(self)
-            elif gsecim=="Listele":
-                self.server.baglanti_liste_al(self)
-            elif gsecim=="Baglan":
-                self.baglanti.send("Hangi cihaza bağlanmak istiyorsun: ".encode("utf-8"))
-                gelen_cevap=self.baglanti.recv(1024).decode("utf-8")
-                self.server.baglanti_istegi(gelen_cevap)
-            elif gsecim=="TTT":
-                print("aaa.py dan geldi soket")
+        try:
+
+            while True:
+                gsecim=self.baglanti.recv(1024).decode("utf-8")
+                if gsecim=="Sil":
+                    self.server.baglanti_sil(self)
+                elif gsecim=="Listele":
+                    self.server.baglanti_liste_al(self)
+                elif gsecim=="Baglan":
+                    #hedef_istemci=#Client tan alınan hedef raddr alınmalı
+                    self.baglanti.send("Server bağlantı isteğini aldı".encode("utf-8"))
+                    self.server.hedef_istemci_bul(self)
+        except (ConnectionRefusedError,ConnectionResetError):
+            clients_thread.remove(self)
+            
+
 
 if __name__ == "__main__":
     server=Server(host="127.0.0.1",port=6598)
