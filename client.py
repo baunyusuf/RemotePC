@@ -1,7 +1,7 @@
 from threading import Thread
 import socket
 import os
-from arayüz import Pencere
+from ui import arayüz2
 from PyQt5 import QtWidgets
 from dosya_transfer_arayüz import Dosya_Pencere
 import sys
@@ -56,6 +56,7 @@ def baglan(radio1,radio2):
             print("Dosya Transferi seçildi")
             server_cevap=sock_create.soket.recv(2048).decode("utf-8")
             print(server_cevap)
+            #pencere.setVisible(False)
             dosya_ekran.show()
             dosya_ekran.ekle.clicked.connect(dosya_ekle)
             dosya_ekran.gonder.clicked.connect(dosya_gonder)
@@ -64,6 +65,7 @@ def baglan(radio1,radio2):
             print("Ekran Paylaşımı seçildi")
         else:
             print("Seçim yapılmadı")
+            pencere.isVisible=True
     except:
         print("Beklenmeyen hata")
 
@@ -75,14 +77,12 @@ if __name__ == "__main__":
     sock_create=Client(host="127.0.0.1",port=3963)
     sock_create.start()
     app=QtWidgets.QApplication(sys.argv)
-    pencere=Pencere()
+    pencere=arayüz2()
     dosya_ekran=Dosya_Pencere()
     
     pencere.listelebtn.clicked.connect(listele)
-    pencere.baglanbtn.clicked.connect(lambda : baglan(pencere.dosya_transferi.isChecked(),pencere.ekran_paylasimi.isChecked()))
-    pencere.kapatbtn.clicked.connect(kapat)
-        
-
+    pencere.baglanbtn.clicked.connect(lambda : baglan(pencere.file_transfer.isChecked(),pencere.remote_pc.isChecked()))
+    
     if not app.exec():
         kapat()
 
