@@ -8,7 +8,7 @@ import sys
 import pickle
 import time
 
-buffer_size=4096
+conn_list=[]
 
 class Client(Thread):
     def __init__(self,host,port):
@@ -18,6 +18,7 @@ class Client(Thread):
         self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     def run(self):
         self.soket.connect((self.host,self.port))
+        
 
 def dosya_ekle():
         dosya_ismi=QtWidgets.QFileDialog.getOpenFileName(dosya_ekran,"Dosya Seç",os.getenv("HOME"))
@@ -27,12 +28,18 @@ def dosya_ekle():
 def dosya_gonder():
     try:
         with open(dosya_ekran.list.currentItem().text(),"rb") as file:
-            print(len(file.read()))
+            #print(len(file.read()))
+            bin_data=pickle.dumps(file.read())
+            print(len(bin_data))
+            
     except AttributeError:
         print("Gönderilcek dosya yok")
+    except TypeError:
+        sock_create.soket.send("Sil".encode("utf-8"))
 
 def kapat():
     sock_create.soket.send("Sil".encode("utf-8"))
+    sock_create.soket.close()
     sys.exit()
 def listele():
     try:
@@ -42,6 +49,8 @@ def listele():
         data=pickle.loads(gelen_data)
         pencere.list.clear()
         for i in data:
+            print(i[0])
+            print(i[1])
             pencere.list.insertItem(t,str(i))
             t+=1
             #print(tuple(i)[0])

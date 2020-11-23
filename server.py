@@ -1,5 +1,6 @@
 import socket
 from threading import Thread
+import threading
 import time
 import os
 import pickle
@@ -32,11 +33,13 @@ class Server(Thread):
     def baglanti_sil(self,kaynak):
         clients_thread.remove(kaynak)
         clients_ip.remove(kaynak.baglanti.getpeername())
+        kaynak.baglanti.close()
         print("Bağlı olan istemci sayısı:{}".format(len(clients_thread)))
     def baglanti_liste_al(self,kaynak):
         os.system("clear")
+        print(threading.enumerate())
         data=pickle.dumps(clients_ip)
-        print("Liste gönderildi")
+        print("Listes gönderildi")
         kaynak.baglanti.send(data)
     def data_al(self,kaynak):
         print("Veri alımı başladı")
@@ -48,11 +51,14 @@ class Soket(Thread):
         self.baglanti=baglanti
         self.server=server
     def run(self):
+        #print(type(self.baglanti))
+        print(threading.active_count())
         try:
             while True:
                 gsecim=self.baglanti.recv(1024).decode("utf-8")
                 if gsecim=="Sil":
                     self.server.baglanti_sil(self)
+                    break
                 elif gsecim=="Listele":
                     self.server.baglanti_liste_al(self)
                 elif gsecim=="Baglan":
@@ -61,7 +67,7 @@ class Soket(Thread):
                     self.server.data_al(self.baglanti)
         except (ConnectionRefusedError,ConnectionResetError):
             clients_thread.remove(self)
-            
+
 
 
 if __name__ == "__main__":
