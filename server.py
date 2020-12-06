@@ -1,9 +1,11 @@
 import socket
-from threading import Thread
+from threading import Thread,Lock
 import threading
 import time
 import os
 import pickle
+from PyQt5 import QtWidgets
+
 
 clients_thread=[]
 clients_ip=[]
@@ -66,13 +68,11 @@ class Soket(Thread):
                     self.baglanti.send("Server bağlantı isteğini aldı".encode("utf-8"))
                     self.server.data_al(self.baglanti)
         except (ConnectionRefusedError,ConnectionResetError):
-            clients_thread.remove(self)
-
+            clients_thread.remove(self)#Bağlantı hatası alındığında bağlı olan istemci listede kalmaması gerektiğinden kullandıldı.
 
 
 if __name__ == "__main__":
     server=Server(host="127.0.0.1",port=3963)
     server.start()
-
 
 

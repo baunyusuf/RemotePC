@@ -6,11 +6,11 @@ from PyQt5 import QtWidgets
 from dosya_transfer_arayüz import Dosya_Pencere
 import sys
 import pickle
-import time
-
+import time 
 conn_list=[]
 
 class Client(Thread):
+
     def __init__(self,host,port):
         super().__init__()
         self.host=host
@@ -18,30 +18,39 @@ class Client(Thread):
         self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     def run(self):
         self.soket.connect((self.host,self.port))
-        
+
 
 def dosya_ekle():
+
         dosya_ismi=QtWidgets.QFileDialog.getOpenFileName(dosya_ekran,"Dosya Seç",os.getenv("HOME"))
+        a,b=os.path.split(dosya_ismi[0])#Dosya yolu ile adını ayrı değişkenlerde tutarız
+        c=os.path.splitext(b)#Dosya adını ad,uzantısı seklinde ayırır
+        print(c[1])#Dosya uzantısı verir.
+        #print(a)
+        #print(b)
         dosya_ekran.list.insertItem(dosya_ekran.i,dosya_ismi[0])
         dosya_ekran.i+=1
 
 def dosya_gonder():
+
     try:
         with open(dosya_ekran.list.currentItem().text(),"rb") as file:
-            #print(len(file.read()))
-            bin_data=pickle.dumps(file.read())
-            print(len(bin_data))
-            
+            print(len(file.read()))
+            #print(file.name)
     except AttributeError:
         print("Gönderilcek dosya yok")
+
     except TypeError:
         sock_create.soket.send("Sil".encode("utf-8"))
 
 def kapat():
+
     sock_create.soket.send("Sil".encode("utf-8"))
     sock_create.soket.close()
     sys.exit()
+
 def listele():
+
     try:
         t=0
         sock_create.soket.send("Listele".encode("utf-8"))
@@ -54,10 +63,11 @@ def listele():
             pencere.list.insertItem(t,str(i))
             t+=1
             #print(tuple(i)[0])
-            
     except:
         print("Server açık değil veya ulaşılamıyor")
+
 def baglan(radio1,radio2):
+
     try:
         if radio1:
             
@@ -78,20 +88,20 @@ def baglan(radio1,radio2):
     except:
         print("Beklenmeyen hata")
 
-def dosya_sec():
-    dosya_ismi=QtWidgets.QFileDialog.getOpenFileName(pencere,"Dosya Seç",os.getenv("HOME"))
-    return dosya_ismi
+
+
 
 if __name__ == "__main__":
+
     sock_create=Client(host="127.0.0.1",port=3963)
     sock_create.start()
     app=QtWidgets.QApplication(sys.argv)
     pencere=arayüz2()
     dosya_ekran=Dosya_Pencere()
-    
+
     pencere.listelebtn.clicked.connect(listele)
     pencere.baglanbtn.clicked.connect(lambda : baglan(pencere.file_transfer.isChecked(),pencere.remote_pc.isChecked()))
-    
+
     if not app.exec():
         kapat()
 
