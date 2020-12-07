@@ -45,21 +45,24 @@ class Server(Thread):
         kaynak.baglanti.send(data)
     def data_al(self,kaynak):
         i=0
+        toplam=0
         x=kaynak.recv(1024)
         while x:
             i+=1
             print("Gelen paket numarası ve boyutu:{}-{}".format(i,len(x)))
+            toplam+=len(x)
+            print(toplam)
             x=kaynak.recv(1024)
-        print("Data bitti")
-        i=0
+        print("Toplam paket boyutu:{}".format(toplam))
         
-        
+
 
 class Soket(Thread):
     def __init__(self,baglanti,server):
         super().__init__()
         self.baglanti=baglanti
         self.server=server
+        self.lock=Lock()
     def run(self):
         #print(type(self.baglanti))
         print(threading.active_count())
