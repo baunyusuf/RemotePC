@@ -15,31 +15,16 @@ class Dosya_Pencere(QWidget):
         self.list=QListWidget()
         self.i=0
         
-
+        hbox=QHBoxLayout()
         vbox=QVBoxLayout()
         vbox.addStretch()
         vbox.addWidget(self.ekle)
         vbox.addWidget(self.gonder)
         vbox.addWidget(self.temizle)
         vbox.addStretch()
-        hbox=QHBoxLayout()
         hbox.addWidget(self.list)
         hbox.addLayout(vbox)
 
+
         self.setLayout(hbox)
-
-    
-    
-        
-        
-
-
-
-
-
-
-
-
-        
-
 

@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread,Lock
 import socket
 import os
 from ui import arayüz2
@@ -18,6 +18,7 @@ class Client(Thread):
         self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     def run(self):
         self.soket.connect((self.host,self.port))
+    
 
 
 def dosya_ekle():
@@ -33,15 +34,14 @@ def dosya_ekle():
 
 def dosya_gonder():
 
-    try:
+    
         with open(dosya_ekran.list.currentItem().text(),"rb") as file:
-            print(len(file.read()))
+            #print(len(file.read()))
+            x=file.read()
+            while x:
+                sock_create.soket.send(x)
+                x=file.read()
             #print(file.name)
-    except AttributeError:
-        print("Gönderilcek dosya yok")
-
-    except TypeError:
-        sock_create.soket.send("Sil".encode("utf-8"))
 
 def kapat():
 
@@ -90,11 +90,10 @@ def baglan(radio1,radio2):
 
 
 
-
 if __name__ == "__main__":
-
     sock_create=Client(host="127.0.0.1",port=3963)
     sock_create.start()
+    
     app=QtWidgets.QApplication(sys.argv)
     pencere=arayüz2()
     dosya_ekran=Dosya_Pencere()
@@ -104,4 +103,5 @@ if __name__ == "__main__":
 
     if not app.exec():
         kapat()
+        
 

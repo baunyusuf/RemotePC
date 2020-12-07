@@ -44,7 +44,15 @@ class Server(Thread):
         print("Listes gönderildi")
         kaynak.baglanti.send(data)
     def data_al(self,kaynak):
-        print("Veri alımı başladı")
+        i=0
+        x=kaynak.recv(1024)
+        while x:
+            i+=1
+            print("Gelen paket numarası ve boyutu:{}-{}".format(i,len(x)))
+            x=kaynak.recv(1024)
+        print("Data bitti")
+        i=0
+        
         
 
 class Soket(Thread):
