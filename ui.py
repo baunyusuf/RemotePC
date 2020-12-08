@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication,QWidget,QPushButton,QRadioButton,QLabel,QListWidget,QVBoxLayout,QHBoxLayout
 import sys
-class arayüz2(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -10,7 +10,7 @@ class arayüz2(QWidget):
         self.remote_pc=QRadioButton("Bilgisayar Yönetimi")
         self.file_transfer=QRadioButton("Dosya Paylaşımı")
         self.baglanbtn=QPushButton("Bağlan")
-        self.listelebtn=QPushButton("Yenile")
+        self.listelebtn=QPushButton("Listele")
 
 
         vbox=QVBoxLayout()
@@ -27,4 +27,3 @@ class arayüz2(QWidget):
 
         self.setLayout(vbox)
 
-        self.show()

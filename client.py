@@ -1,7 +1,7 @@
 from threading import Thread,Lock
 import socket
 import os
-from ui import arayüz2
+from ui import MainWindow
 from PyQt5 import QtWidgets
 from dosya_transfer_arayüz import Dosya_Pencere
 import sys
@@ -20,88 +20,30 @@ class Client(Thread):
         self.soket.connect((self.host,self.port))
     
 
-
-def dosya_ekle():
-
-        dosya_ismi=QtWidgets.QFileDialog.getOpenFileName(dosya_ekran,"Dosya Seç",os.getenv("HOME"))
-        a,b=os.path.split(dosya_ismi[0])#Dosya yolu ile adını ayrı değişkenlerde tutarız
-        c=os.path.splitext(b)#Dosya adını ad,uzantısı seklinde ayırır
-        print(c[1])#Dosya uzantısı verir.
-        #print(a)
-        #print(b)
-        dosya_ekran.list.insertItem(dosya_ekran.i,dosya_ismi[0])
-        dosya_ekran.i+=1
-
-def dosya_gonder():
-
-    
-        with open(dosya_ekran.list.currentItem().text(),"rb") as file:
-            #print(len(file.read()))
-            x=file.read()
-            while x:
-                sock_create.soket.send(x)
-                x=file.read()
-            #print(file.name)
-
-def kapat():
-
-    sock_create.soket.send("Sil".encode("utf-8"))
-    sock_create.soket.close()
+def show_list():
+    client.soket.send("list".encode("utf-8"))
+    client_addr_data=client.soket.recv(4096)
+    client_addr_data=pickle.loads(client_addr_data)
+    MainWindow.list.clear()
+    for i in client_addr_data:
+        MainWindow.list.addItem(str(i))
+def exit():
+    client.soket.send("remove".encode("utf-8"))
+    client.soket.close()
     sys.exit()
-
-def listele():
-
-    try:
-        t=0
-        sock_create.soket.send("Listele".encode("utf-8"))
-        gelen_data=sock_create.soket.recv(4096)
-        data=pickle.loads(gelen_data)
-        pencere.list.clear()
-        for i in data:
-            print(i[0])
-            print(i[1])
-            pencere.list.insertItem(t,str(i))
-            t+=1
-            #print(tuple(i)[0])
-    except:
-        print("Server açık değil veya ulaşılamıyor")
-
-def baglan(radio1,radio2):
-
-    try:
-        if radio1:
-            
-            sock_create.soket.send("Baglan".encode("utf-8"))
-            print("Dosya Transferi seçildi")
-            server_cevap=sock_create.soket.recv(2048).decode("utf-8")
-            print(server_cevap)
-            #pencere.setVisible(False)
-            dosya_ekran.show()
-            dosya_ekran.ekle.clicked.connect(dosya_ekle)
-            dosya_ekran.gonder.clicked.connect(dosya_gonder)
-            dosya_ekran.temizle.clicked.connect(lambda : dosya_ekran.list.clear())
-        elif radio2:
-            print("Ekran Paylaşımı seçildi")
-        else:
-            print("Seçim yapılmadı")
-            pencere.isVisible=True
-    except:
-        print("Beklenmeyen hata")
-
+def client_to_client():
+    
+    pass
 
 
 if __name__ == "__main__":
-    sock_create=Client(host="127.0.0.1",port=3963)
-    sock_create.start()
-    
+    client=Client(host="127.0.0.1",port=3963)
+    client.start()
     app=QtWidgets.QApplication(sys.argv)
-    pencere=arayüz2()
-    dosya_ekran=Dosya_Pencere()
-
-    pencere.listelebtn.clicked.connect(listele)
-    pencere.baglanbtn.clicked.connect(lambda : baglan(pencere.file_transfer.isChecked(),pencere.remote_pc.isChecked()))
+    MainWindow=MainWindow()
+    MainWindow.show()
+    MainWindow.listelebtn.clicked.connect(show_list)
 
     if not app.exec():
-        kapat()
-        
+        exit()
 
