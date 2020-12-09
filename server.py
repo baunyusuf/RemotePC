@@ -38,28 +38,31 @@ class Server(Thread):
     def remove_client(self,source_client,socket_thread):
         soket_threads.remove(socket_thread)
         soket_addr.remove(source_client.getpeername())
+    def file_transfer(self):
+        pass
         
-
-
-
+        
 class Soket(Thread):
     def __init__(self,conn,serverclass):
         super().__init__()
         self.conn=conn
         self.serverclass=serverclass
+        self.lock=Lock()
     def run(self):
         while True:
-            choose=self.conn.recv(1024).decode("utf-8")
-            if choose=="list":
+            select=self.conn.recv(1024).decode("utf-8")
+            if select=="list":
+                self.lock.acquire(blocking=True,timeout=-1)
                 self.serverclass.send_client_list(self.conn)
-                choose=""
-            elif choose=="remove":
+                self.lock.release()
+            elif select=="remove":
+                self.lock.acquire(blocking=True,timeout=-1)
                 self.serverclass.remove_client(self.conn,self)
-            else:
-                continue
-
-
-
+                self.lock.release()
+            elif select=="connect":
+                self.lock.acquire(blocking=True,timeout=-1)
+                self.serverclass.file_transfer()
+                self.lock.release()
 
 if __name__ == "__main__":
     server=Server(host="127.0.0.1",port=3963)

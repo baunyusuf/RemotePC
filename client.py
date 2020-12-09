@@ -31,9 +31,11 @@ def exit():
     client.soket.send("remove".encode("utf-8"))
     client.soket.close()
     sys.exit()
-def client_to_client():
-    
-    pass
+def connect(target_client,radio1,radio2):
+    if radio1:
+        pass
+    elif radio2:
+        pass
 
 
 if __name__ == "__main__":
@@ -43,7 +45,10 @@ if __name__ == "__main__":
     MainWindow=MainWindow()
     MainWindow.show()
     MainWindow.listelebtn.clicked.connect(show_list)
-
+    MainWindow.baglanbtn.clicked.connect(lambda : connect(MainWindow.list.currentItem().text(),MainWindow.remote_pc.isChecked(),MainWindow.file_transfer.isChecked()))
+        
+    
+    
     if not app.exec():
         exit()
 
