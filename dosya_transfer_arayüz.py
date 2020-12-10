@@ -28,3 +28,5 @@ class Dosya_Pencere(QWidget):
 
         self.setLayout(hbox)
 
+
+
