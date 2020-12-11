@@ -31,31 +31,7 @@ class Server(Thread):
             soket_threads.append(create_socket_thread)#Bağlanan istemcileri tutar(tipi soket türündendir)
             soket_addr.append(addr)#Bağlanan istemcilerin ip,raddr ikilisini tutar.Her eleman bir tuple dır.
 
-
-def send_client_list(source_client,req_thread):
-        req_thread.lock.acquire(blocking=True,timeout=-1)
-        os.system("cls")
-        print(soket_threads)
-        print(soket_addr)
-        soket_addr_data=pickle.dumps(soket_addr)
-        source_client.send(soket_addr_data)
-        req_thread.lock.release()
-
-def remove_client(source_client,req_thread):
-        req_thread.lock.acquire(blocking=True,timeout=-1)
-        soket_threads.remove(source_client)
-        soket_addr.remove(source_client.conn.getpeername())
-        req_thread.lock.release()
-
-def file_transfer(source_client,req_thread):
-        req_thread.lock.acquire(blocking=True,timeout=-1)
-        gelen_data=source_client.recv(1024).decode("utf-8")
-        print(gelen_data)
-        req_thread.lock.release()
        
-       
-        
-        
 class Soket(Thread):
     def __init__(self,conn,serverclass):
         super().__init__()
@@ -63,13 +39,13 @@ class Soket(Thread):
         self.serverclass=serverclass
     def run(self):
         print("{} istemcisi için yeni bir thread oluşturuldu ve istekler dinlenmeye başladı".format(self.conn.getpeername()))
-        a=Requests(self.conn,self.serverclass,self)
+        a=Requests(self.conn,self)
         a.start()
         a.select()
         
 
 class Requests(Thread):
-    def __init__(self,conn,serverclass,soket_thread):
+    def __init__(self,conn,soket_thread):
          super().__init__()
          self.conn=conn
          self.lock=Lock()
@@ -80,17 +56,25 @@ class Requests(Thread):
        while True:
            select=self.conn.recv(1024).decode("utf-8")
            if select=="list":
-               send_client_list(self.conn,self)
+                self.lock.acquire(blocking=True,timeout=-1)
+                os.system("cls")
+                print(soket_threads)
+                print(soket_addr)
+                soket_addr_data=pickle.dumps(soket_addr)
+                self.conn.send(soket_addr_data)
+                self.lock.release()
            elif select=="remove":
-               remove_client(self.soket,self)
+                self.lock.acquire(blocking=True,timeout=-1)
+                soket_threads.remove(self.soket)
+                soket_addr.remove(self.conn.getpeername())
+                self.lock.release()
            elif select=="connect":
-               file_transfer(self.conn,self)
+                self.lock.acquire(blocking=True,timeout=-1)
+                gelen_data=self.conn.recv(1024).decode("utf-8")
+                self.conn.send(gelen_data.encode("utf-8"))
+                self.lock.release()
 
-
-
-
-
-                
+            
 
 if __name__ == "__main__":
     server=Server(host="127.0.0.1",port=3963)
