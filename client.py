@@ -1,9 +1,9 @@
 from threading import Thread,Lock
 import socket
 import os
-from ui import MainWindow
+from client_ui import MainWindow
 from PyQt5 import QtWidgets
-from dosya_transfer_arayüz import Dosya_Pencere
+from file_transfer_ui import Dosya_Pencere
 import sys
 import pickle
 import time 
@@ -17,21 +17,27 @@ class Client(Thread):
         self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     def run(self):
         self.soket.connect((self.host,self.port))
+
 class Receive(Thread):
     def __init__(self,client):
         super().__init__()
         self.soket=client
-        self.lock=Lock()  
+        self.lock=Lock()
+        self.deger=""
     def run(self):
-            data=self.soket.recv(2048)
-            if data:
-                print(data.decode("utf-8"))
-                time.sleep(1)
+        self.deger=self.soket.recv(1024).decode("utf-8")
+        while self.deger:   
+            if self.deger!="s":
+                print("thread aktif ve çalışıyor")
+                print("data var")
+                print(self.deger)
+                self.deger=self.soket.recv(1024).decode("utf-8")
             else:
-                print("data yok")
-                time.sleep(1)
-               
+                self.lock.acquire(blocking=True,timeout=-1)
+                
             
+
+                    
 def show_list():
     client.soket.send("list".encode("utf-8"))
     client_addr_data=client.soket.recv(4096)
@@ -48,15 +54,18 @@ def exit():
     sys.exit()
 def connect(target_client,radio1,radio2):
     try:
+        
         if radio1:
-            pass
+           print("Zazaza")
         elif radio2:
             #conn_list tuple olarak ip,raddr bilgisi tutulur
-           
             client.soket.send("connect".encode("utf-8"))
             client.soket.send(target_client.text().encode("utf-8"))
             t=Receive(client.soket)
-            t.start()
+            if not t.is_alive():
+                t.start()
+            else:
+                t.run()
     except AttributeError:
         print("İstemci seçilmedi")
 

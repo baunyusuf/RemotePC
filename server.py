@@ -5,6 +5,7 @@ import time
 import os
 import pickle
 from PyQt5 import QtWidgets
+import sys
 
 
 soket_threads=[]
@@ -31,6 +32,12 @@ class Server(Thread):
             soket_threads.append(create_socket_thread)#Bağlanan istemcileri tutar(tipi soket türündendir)
             soket_addr.append(addr)#Bağlanan istemcilerin ip,raddr ikilisini tutar.Her eleman bir tuple dır.
 
+class Server_State(Thread):
+    def __init__(self):
+        super().__init__()
+    def run(self):
+        pass
+
        
 class Soket(Thread):
     def __init__(self,conn,serverclass):
@@ -42,7 +49,7 @@ class Soket(Thread):
         a=Requests(self.conn,self)
         a.start()
         a.select()
-        
+   
 
 class Requests(Thread):
     def __init__(self,conn,soket_thread):
@@ -53,29 +60,45 @@ class Requests(Thread):
     def run(self):
         pass
     def select(self):
-       while True:
-           select=self.conn.recv(1024).decode("utf-8")
-           if select=="list":
-                self.lock.acquire(blocking=True,timeout=-1)
-                os.system("cls")
-                print(soket_threads)
-                print(soket_addr)
-                soket_addr_data=pickle.dumps(soket_addr)
-                self.conn.send(soket_addr_data)
-                self.lock.release()
-           elif select=="remove":
-                self.lock.acquire(blocking=True,timeout=-1)
-                soket_threads.remove(self.soket)
-                soket_addr.remove(self.conn.getpeername())
-                self.lock.release()
-           elif select=="connect":
-                self.lock.acquire(blocking=True,timeout=-1)
-                gelen_data=self.conn.recv(1024).decode("utf-8")
-                self.conn.send(gelen_data.encode("utf-8"))
-                self.lock.release()
-
+        try:
+           while True:
+                select=self.conn.recv(1024).decode("utf-8")
+                if select=="list":
+                    self.lock.acquire(blocking=True,timeout=-1)
+                    os.system("cls")
+                    print(soket_threads)
+                    print(soket_addr)
+                    soket_addr_data=pickle.dumps(soket_addr)
+                    self.conn.send(soket_addr_data)
+                    self.lock.release()
+                elif select=="remove":
+                    self.lock.acquire(blocking=True,timeout=-1)
+                    soket_threads.remove(self.soket)
+                    soket_addr.remove(self.conn.getpeername())
+                    self.lock.release()
+                elif select=="connect":
+                    self.lock.acquire(blocking=True,timeout=-1)
+                    data=self.conn.recv(2048).decode("utf-8")
+                    while data=="connect":
+                        data=self.conn.recv(2048).decode("utf-8")
+                    self.conn.send(data.encode("utf-8"))
+                    time.sleep(1)
+                    self.conn.send(data.encode("utf-8"))
+                    time.sleep(1)
+                    self.conn.send(data.encode("utf-8"))
+                    time.sleep(1)
+                    self.conn.send("s".encode("utf-8"))
+                    self.lock.release()
+        except ConnectionResetError:
+            soket_threads.remove(self.soket)
+            soket_addr.remove(self.conn.getpeername())
             
+    def file_receive(self):
+        pass
+    def file_send(self):
+        pass
+
 
 if __name__ == "__main__":
     server=Server(host="127.0.0.1",port=3963)
-    server.start()
+    server.start() 
