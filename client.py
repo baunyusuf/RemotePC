@@ -1,86 +1,104 @@
-from threading import Thread,Lock
-import socket
-import os
-from client_ui import MainWindow
-from PyQt5 import QtWidgets
-from file_transfer_ui import Dosya_Pencere
+from PyQt5.QtWidgets import QApplication, QWidget, QListWidget, QRadioButton, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox
+from PyQt5.QtCore import *
 import sys
+import time
+from threading import Thread, Lock
+import socket
 import pickle
-import time 
-conn_list=[]
+
+conn_list = []
+
+
 class Client(Thread):
-
-    def __init__(self,host,port):
+    def __init__(self, host, port):
         super().__init__()
-        self.host=host
-        self.port=port
-        self.soket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    def run(self):
-        self.soket.connect((self.host,self.port))
+        self.host = host
+        self.port = port
+        self.soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-class Receive(Thread):
-    def __init__(self,client):
+    def run(self):
+        self.soket.connect((self.host, self.port))
+
+
+class İzin(QThread):
+    sinyal_connect = pyqtSignal(tuple)
+    sinyal_list = pyqtSignal(list)
+
+    def __init__(self, conn):
         super().__init__()
-        self.soket=client
-        self.lock=Lock()
-        self.deger=""
+        self.conn = conn
+        self.lock = Lock()
+
     def run(self):
-        self.deger=self.soket.recv(1024).decode("utf-8")
-        while self.deger:   
-            if self.deger!="s":
-                print("thread aktif ve çalışıyor")
-                print("data var")
-                print(self.deger)
-                self.deger=self.soket.recv(1024).decode("utf-8")
+        while True:
+            data = self.conn.soket.recv(2048)
+            data = pickle.loads(data)
+            if type(data) == tuple:
+                self.sinyal_connect.emit(data)
             else:
-                self.lock.acquire(blocking=True,timeout=-1)
-                
-            
+                if type(data) == list:
+                    self.sinyal_list.emit(data)
 
-                    
-def show_list():
-    client.soket.send("list".encode("utf-8"))
-    client_addr_data=client.soket.recv(4096)
-    client_addr_data=pickle.loads(client_addr_data)
-    MainWindow.list.clear()
-    conn_list.clear()
-    for i in client_addr_data:
-        MainWindow.list.addItem(str(i))
-        conn_list.append(i)
-def exit():
-    client.soket.send("remove".encode("utf-8"))
-    client.soket.close()
-    conn_list.clear()
-    sys.exit()
-def connect(target_client,radio1,radio2):
-    try:
-        
-        if radio1:
-           print("Zazaza")
-        elif radio2:
-            #conn_list tuple olarak ip,raddr bilgisi tutulur
-            client.soket.send("connect".encode("utf-8"))
-            client.soket.send(target_client.text().encode("utf-8"))
-            t=Receive(client.soket)
-            if not t.is_alive():
-                t.start()
-            else:
-                t.run()
-    except AttributeError:
-        print("İstemci seçilmedi")
 
-                
-        
+class AnaEkran(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.conn = Client(host="127.0.0.1", port=3963)
+        self.conn.start()
+        self.init_ui()
+        self.izin = İzin(self.conn)
+        self.izin.sinyal_connect.connect(self.yayinla)
+        self.izin.sinyal_list.connect(self.liste)
+        self.izin.start()
+
+    def init_ui(self):
+        self.list = QListWidget()
+        self.file = QRadioButton("Dosya Paylaşımı")
+        self.remote = QRadioButton("Ekran Paylaşımı")
+        self.baglanbtn = QPushButton("Bağlan")
+        self.listelebtn = QPushButton("Listele")
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.list)
+        vbox.addWidget(self.file)
+        vbox.addWidget(self.remote)
+        vbox.addWidget(self.baglanbtn)
+        vbox.addWidget(self.listelebtn)
+        self.setLayout(vbox)
+
+        self.show()
+        self.baglanbtn.clicked.connect(self.gonder)
+        self.listelebtn.clicked.connect(self.show_list)
+
+    def liste(self, a):
+        self.list.clear()
+        for i in a:
+            self.list.addItem(str(i))
+
+    def gonder(self):
+        self.conn.soket.send("connect".encode("utf-8"))
+        self.conn.soket.send(self.list.currentItem().text().encode("utf-8"))
+
+    def exit(self):
+        self.conn.soket.send("remove".encode("utf-8"))
+        self.conn.soket.close()
+        conn_list.clear()
+        sys.exit()
+
+    def yayinla(self, a):
+        ret = QMessageBox.question(
+            self, "Onay Kutusu", f"{a} senden izin istiyor ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if ret == QMessageBox.Yes:
+            print("Bağlantı onaylandı")
+        elif ret == QMessageBox.No:
+            print("Bağlantı onaylanmadı")
+
+    def show_list(self):
+        self.conn.soket.send("list".encode("utf-8"))
+
 
 if __name__ == "__main__":
-    client=Client(host="127.0.0.1",port=3963)
-    client.start()
-    app=QtWidgets.QApplication(sys.argv)
-    MainWindow=MainWindow()
-    MainWindow.show()
-    MainWindow.listelebtn.clicked.connect(show_list)
-    MainWindow.baglanbtn.clicked.connect(lambda : connect(MainWindow.list.currentItem(),MainWindow.remote_pc.isChecked(),MainWindow.file_transfer.isChecked()))
-    
+    app = QApplication(sys.argv)
+    ana_ekran = AnaEkran()
     if not app.exec():
-        exit()
-
+        ana_ekran.exit()
