@@ -59,25 +59,25 @@ class Requests(Thread):
         pass
 
     def select(self):
-        try:
-            while True:
-                select = self.conn.recv(4096).decode("utf-8")
-                if select == "connect":
-                    data = self.conn.recv(2048).decode("utf-8")
-                    for i in soket_threads:
-                        if str(i.conn.getpeername()) == data:
-                            data = pickle.dumps(i.conn.getpeername())
-                            i.conn.send(data)
-                elif select == "remove":
-                    soket_threads.remove(self.soket)
-                    soket_addr.remove(self.conn.getpeername())
-                elif select == "list":
-                    data = pickle.dumps(soket_addr)
-                    self.conn.send(data)
-
-        except ConnectionResetError:
-            soket_threads.remove(self.soket)
-            soket_addr.remove(self.conn.getpeername())
+        while True:
+            select = self.conn.recv(4096).decode("utf-8")
+            if select == "connect":
+                data = self.conn.recv(2048).decode("utf-8")
+                for i in soket_threads:
+                    if str(i.conn.getpeername()) == data:
+                        data = pickle.dumps(i.conn.getpeername())
+                        i.conn.send(data)
+            elif select == "remove":
+                print(
+                    f"{self.conn.getpeername()} adlı cihazın bağlantısı sonlandırılıyor")
+                soket_threads.remove(self.soket)
+                soket_addr.remove(self.conn.getpeername())
+                self.conn.close()
+                print("sonlandırıldı.")
+                break
+            elif select == "list":
+                data = pickle.dumps(soket_addr)
+                self.conn.send(data)
 
 
 if __name__ == "__main__":

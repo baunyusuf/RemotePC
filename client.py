@@ -31,13 +31,16 @@ class İzin(QThread):
 
     def run(self):
         while True:
-            data = self.conn.soket.recv(2048)
-            data = pickle.loads(data)
-            if type(data) == tuple:
-                self.sinyal_connect.emit(data)
-            else:
-                if type(data) == list:
-                    self.sinyal_list.emit(data)
+            try:
+                data = self.conn.soket.recv(2048)
+                data = pickle.loads(data)
+                if type(data) == tuple:
+                    self.sinyal_connect.emit(data)
+                else:
+                    if type(data) == list:
+                        self.sinyal_list.emit(data)
+            except ConnectionAbortedError:
+                break
 
 
 class File_Window(QWidget):
