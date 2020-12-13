@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QListWidget, QRadioButton, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QListWidget, QRadioButton, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLabel
 from PyQt5.QtCore import *
 import sys
 import time
@@ -40,6 +40,20 @@ class İzin(QThread):
                     self.sinyal_list.emit(data)
 
 
+class File_Window(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initui()
+
+    def initui(self):
+        self.list = QListWidget()
+        self.son = QPushButton("Sonlandır")
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.list)
+        vbox.addWidget(self.son)
+        self.setLayout(vbox)
+
+
 class AnaEkran(QWidget):
     def __init__(self):
         super().__init__()
@@ -52,6 +66,8 @@ class AnaEkran(QWidget):
         self.izin.start()
 
     def init_ui(self):
+        self.filewindow = File_Window()
+        self.label_my_ip = QLabel(str(self.conn.soket.getsockname()))
         self.list = QListWidget()
         self.file = QRadioButton("Dosya Paylaşımı")
         self.remote = QRadioButton("Ekran Paylaşımı")
@@ -59,11 +75,16 @@ class AnaEkran(QWidget):
         self.listelebtn = QPushButton("Listele")
 
         vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
         vbox.addWidget(self.list)
         vbox.addWidget(self.file)
         vbox.addWidget(self.remote)
         vbox.addWidget(self.baglanbtn)
         vbox.addWidget(self.listelebtn)
+        hbox.addStretch()
+        hbox.addWidget(self.label_my_ip)
+        hbox.addStretch()
+        vbox.addLayout(hbox)
         self.setLayout(vbox)
 
         self.show()
@@ -73,7 +94,8 @@ class AnaEkran(QWidget):
     def liste(self, a):
         self.list.clear()
         for i in a:
-            self.list.addItem(str(i))
+            if self.conn.soket.getsockname() != i:
+                self.list.addItem(str(i))
 
     def gonder(self):
         self.conn.soket.send("connect".encode("utf-8"))
@@ -90,6 +112,9 @@ class AnaEkran(QWidget):
             self, "Onay Kutusu", f"{a} senden izin istiyor ", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if ret == QMessageBox.Yes:
             print("Bağlantı onaylandı")
+            self.hide()
+            self.filewindow.show()
+            self.filewindow.son.clicked.connect(self.hide())
         elif ret == QMessageBox.No:
             print("Bağlantı onaylanmadı")
 
