@@ -17,7 +17,13 @@ class Client(Thread):
         self.soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def run(self):
-        self.soket.connect((self.host, self.port))
+        while True:
+            try:
+                self.soket.connect((self.host, self.port))
+                break
+            except ConnectionRefusedError:
+                print("a")
+                time.sleep(1)
 
 
 class İzin(QThread):
@@ -41,6 +47,8 @@ class İzin(QThread):
                         self.sinyal_list.emit(data)
             except ConnectionAbortedError:
                 break
+            except OSError:
+                continue
 
 
 class File_Window(QWidget):
@@ -101,8 +109,12 @@ class AnaEkran(QWidget):
                 self.list.addItem(str(i))
 
     def gonder(self):
-        self.conn.soket.send("connect".encode("utf-8"))
-        self.conn.soket.send(self.list.currentItem().text().encode("utf-8"))
+        try:
+            self.conn.soket.send("connect".encode("utf-8"))
+            self.conn.soket.send(
+                self.list.currentItem().text().encode("utf-8"))
+        except OSError:
+            pass
 
     def exit(self):
         self.conn.soket.send("remove".encode("utf-8"))
@@ -122,7 +134,10 @@ class AnaEkran(QWidget):
             print("Bağlantı onaylanmadı")
 
     def show_list(self):
-        self.conn.soket.send("list".encode("utf-8"))
+        try:
+            self.conn.soket.send("list".encode("utf-8"))
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":

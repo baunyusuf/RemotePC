@@ -3,6 +3,10 @@ from threading import Thread, Lock
 import time
 import os
 import pickle
+import sys
+
+
+from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit
 
 
 soket_threads = []
@@ -14,16 +18,17 @@ class Server(Thread):
         super().__init__()
         self.host = host
         self.port = port
+        self.soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.soket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.soket.bind((self.host, self.port))
+        self.soket.listen(1)
 
     def run(self):
-        soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        soket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        soket.bind((self.host, self.port))
-        soket.listen(1)
+
         print("Server açık ve dinliyor")
         # Yukarıda soket yapısı oluşturuldu artık gelen istekleri dinlicez.
         while True:
-            conn, addr = soket.accept()
+            conn, addr = self.soket.accept()
             # print(conn)---->#soket bilgisini tutar
             # print(addr)---->#ip,raddr ikilisini tutar
             create_socket_thread = Soket(conn, self)
@@ -62,6 +67,7 @@ class Requests(Thread):
         while True:
             select = self.conn.recv(4096).decode("utf-8")
             if select == "connect":
+                print("asd")
                 data = self.conn.recv(2048).decode("utf-8")
                 for i in soket_threads:
                     if str(i.conn.getpeername()) == data:
@@ -80,6 +86,36 @@ class Requests(Thread):
                 self.conn.send(data)
 
 
+class ServerWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initui()
+        self.server = Server(host="127.0.0.1", port=3963)
+
+    def initui(self):
+        self.start = QPushButton("Başlat")
+        self.stop = QPushButton("Durdur")
+        self.log = QTextEdit("Server Başladı")
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.log)
+        vbox.addWidget(self.start)
+        vbox.addWidget(self.stop)
+
+        self.start.clicked.connect(self.baslat)
+        self.stop.clicked.connect(self.durdur)
+
+        self.setLayout(vbox)
+
+        self.show()
+
+    def baslat(self):
+        self.server.start()
+
+    def durdur(self):
+        pass
+
+
 if __name__ == "__main__":
-    server = Server(host="127.0.0.1", port=3963)
-    server.start()
+    app = QApplication(sys.argv)
+    serverwindow = ServerWindow()
+    sys.exit(app.exec())
