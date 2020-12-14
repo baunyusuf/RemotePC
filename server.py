@@ -7,13 +7,13 @@ import sys
 
 
 from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit
-
+from PyQt5.QtCore import QThread, pyqtSignal
 
 soket_threads = []
 soket_addr = []
 
 
-class Server(Thread):
+class Server(QThread):
     def __init__(self, host, port):
         super().__init__()
         self.host = host
@@ -53,7 +53,8 @@ class Soket(Thread):
         a.select()
 
 
-class Requests(Thread):
+class Requests(QThread):
+
     def __init__(self, conn, soket_thread):
         super().__init__()
         self.conn = conn
@@ -67,11 +68,10 @@ class Requests(Thread):
         while True:
             select = self.conn.recv(4096).decode("utf-8")
             if select == "connect":
-                print("asd")
                 data = self.conn.recv(2048).decode("utf-8")
                 for i in soket_threads:
                     if str(i.conn.getpeername()) == data:
-                        data = pickle.dumps(i.conn.getpeername())
+                        data = pickle.dumps(self.conn.getpeername())
                         i.conn.send(data)
             elif select == "remove":
                 print(
@@ -90,7 +90,7 @@ class ServerWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.initui()
-        self.server = Server(host="127.0.0.1", port=3963)
+        self.server = Server(host="127.0.0.1", port=3856)
 
     def initui(self):
         self.start = QPushButton("Başlat")
@@ -102,7 +102,6 @@ class ServerWindow(QWidget):
         vbox.addWidget(self.stop)
 
         self.start.clicked.connect(self.baslat)
-        self.stop.clicked.connect(self.durdur)
 
         self.setLayout(vbox)
 
@@ -110,9 +109,6 @@ class ServerWindow(QWidget):
 
     def baslat(self):
         self.server.start()
-
-    def durdur(self):
-        pass
 
 
 if __name__ == "__main__":

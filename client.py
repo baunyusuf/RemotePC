@@ -5,6 +5,7 @@ import time
 from threading import Thread, Lock
 import socket
 import pickle
+import os
 
 conn_list = []
 
@@ -42,33 +43,64 @@ class İzin(QThread):
                 data = pickle.loads(data)
                 if type(data) == tuple:
                     self.sinyal_connect.emit(data)
-                else:
-                    if type(data) == list:
-                        self.sinyal_list.emit(data)
+                elif type(data) == list:
+                    self.sinyal_list.emit(data)
             except ConnectionAbortedError:
                 break
             except OSError:
                 continue
 
 
-class File_Window(QWidget):
-    def __init__(self):
+class Pencere(QWidget):
+    def __init__(self, conn, anaekran):
         super().__init__()
-        self.initui()
+        self.init_ui()
+        self.conn = conn
+        self.anaekran = anaekran
 
-    def initui(self):
-        self.list = QListWidget()
-        self.son = QPushButton("Sonlandır")
+    def init_ui(self):
+        self.defaul = os.getcwd()
+        self.label = QLabel(os.getcwd())
+        self.dosya_list = QListWidget()
+        self.dosya_yaz = QPushButton("Dosya yaz")
+        self.listele = QPushButton("Listele")
+        self.sonlandir = QPushButton("Bitir")
+        hbox = QHBoxLayout()
+        hbox.addStretch()
+        hbox.addWidget(self.label)
+        hbox.addStretch()
         vbox = QVBoxLayout()
-        vbox.addWidget(self.list)
-        vbox.addWidget(self.son)
+        vbox.addLayout(hbox)
+        vbox.addWidget(self.dosya_list)
+        vbox.addWidget(self.dosya_yaz)
+        vbox.addWidget(self.listele)
+        vbox.addWidget(self.sonlandir)
         self.setLayout(vbox)
+
+        for i in os.listdir(self.defaul):
+            self.dosya_list.addItem(str(i))
+
+        self.listele.clicked.connect(self.liste)
+        self.sonlandir.clicked.connect(self.son)
+
+    def liste(self):
+        yeni_yol = self.dosya_list.currentItem().text()
+        if os.path.isdir(yeni_yol) == True:
+            self.dosya_list.clear()
+            for i in os.listdir(os.chdir(yeni_yol)):
+                self.dosya_list.addItem(str(i))
+        else:
+            QMessageBox.about(self, "Bilgilendirme", "Bu bir dizin değildir")
+
+    def son(self):
+        self.close()
+        self.anaekran.show()
 
 
 class AnaEkran(QWidget):
     def __init__(self):
         super().__init__()
-        self.conn = Client(host="127.0.0.1", port=3963)
+        self.conn = Client(host="127.0.0.1", port=3856)
         self.conn.start()
         self.init_ui()
         self.izin = İzin(self.conn)
@@ -77,7 +109,7 @@ class AnaEkran(QWidget):
         self.izin.start()
 
     def init_ui(self):
-        self.filewindow = File_Window()
+        self.filewindow = Pencere(self.conn, self)
         self.label_my_ip = QLabel(str(self.conn.soket.getsockname()))
         self.list = QListWidget()
         self.file = QRadioButton("Dosya Paylaşımı")
@@ -103,6 +135,7 @@ class AnaEkran(QWidget):
         self.listelebtn.clicked.connect(self.show_list)
 
     def liste(self, a):
+        self.label_my_ip.setText(str(self.conn.soket.getsockname()))
         self.list.clear()
         for i in a:
             if self.conn.soket.getsockname() != i:
@@ -129,7 +162,6 @@ class AnaEkran(QWidget):
             print("Bağlantı onaylandı")
             self.hide()
             self.filewindow.show()
-            self.filewindow.son.clicked.connect(self.hide())
         elif ret == QMessageBox.No:
             print("Bağlantı onaylanmadı")
 
