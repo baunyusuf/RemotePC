@@ -23,13 +23,14 @@ class Client(Thread):
                 self.soket.connect((self.host, self.port))
                 break
             except ConnectionRefusedError:
-                print("a")
+                print("Server aktif değil")
                 time.sleep(1)
 
 
 class İzin(QThread):
     sinyal_connect = pyqtSignal(tuple)
     sinyal_list = pyqtSignal(list)
+    cevap_sinyal = pyqtSignal(str)
 
     def __init__(self, conn):
         super().__init__()
@@ -39,12 +40,14 @@ class İzin(QThread):
     def run(self):
         while True:
             try:
-                data = self.conn.soket.recv(2048)
+                data = self.conn.soket.recv(4096)
                 data = pickle.loads(data)
                 if type(data) == tuple:
                     self.sinyal_connect.emit(data)
                 elif type(data) == list:
                     self.sinyal_list.emit(data)
+                elif type(data) == str:
+                    self.cevap_sinyal.emit(data)
             except ConnectionAbortedError:
                 break
             except OSError:
@@ -62,7 +65,7 @@ class Pencere(QWidget):
         self.defaul = os.getcwd()
         self.label = QLabel(os.getcwd())
         self.dosya_list = QListWidget()
-        self.dosya_yaz = QPushButton("Dosya yaz")
+        self.dosya_gonder = QPushButton("Dosya Gönder")
         self.listele = QPushButton("Listele")
         self.sonlandir = QPushButton("Bitir")
         hbox = QHBoxLayout()
@@ -72,7 +75,7 @@ class Pencere(QWidget):
         vbox = QVBoxLayout()
         vbox.addLayout(hbox)
         vbox.addWidget(self.dosya_list)
-        vbox.addWidget(self.dosya_yaz)
+        vbox.addWidget(self.dosya_gonder)
         vbox.addWidget(self.listele)
         vbox.addWidget(self.sonlandir)
         self.setLayout(vbox)
@@ -106,6 +109,7 @@ class AnaEkran(QWidget):
         self.izin = İzin(self.conn)
         self.izin.sinyal_connect.connect(self.yayinla)
         self.izin.sinyal_list.connect(self.liste)
+        self.izin.cevap_sinyal.connect(self.cevap)
         self.izin.start()
 
     def init_ui(self):
@@ -143,17 +147,22 @@ class AnaEkran(QWidget):
 
     def gonder(self):
         try:
-            self.conn.soket.send("connect".encode("utf-8"))
-            self.conn.soket.send(
-                self.list.currentItem().text().encode("utf-8"))
+            data = ("connect", 1)
+            self.conn.soket.send(pickle.dumps(data))
+            self.conn.soket.send(pickle.dumps(self.list.currentItem().text()))
         except OSError:
             pass
 
     def exit(self):
-        self.conn.soket.send("remove".encode("utf-8"))
-        self.conn.soket.close()
-        conn_list.clear()
-        sys.exit()
+        try:
+            data = ("remove", 1)
+            self.conn.soket.send(pickle.dumps(data))
+            self.conn.soket.close()
+            conn_list.clear()
+            os.system("cls")
+            sys.exit()
+        except ConnectionResetError:
+            sys.exit()
 
     def yayinla(self, a):
         ret = QMessageBox.question(
@@ -163,13 +172,19 @@ class AnaEkran(QWidget):
             self.hide()
             self.filewindow.show()
         elif ret == QMessageBox.No:
-            print("Bağlantı onaylanmadı")
+            a = ("Onaylanmadı", str(a))
+            b = pickle.dumps(a)
+            self.conn.soket.send(b)
 
     def show_list(self):
         try:
-            self.conn.soket.send("list".encode("utf-8"))
+            data = ("list", 1)
+            self.conn.soket.send(pickle.dumps(data))
         except OSError:
             pass
+
+    def cevap(self, a):
+        QMessageBox.about(self, "Bilgilendirme", a)
 
 
 if __name__ == "__main__":

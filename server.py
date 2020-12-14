@@ -14,6 +14,7 @@ soket_addr = []
 
 
 class Server(QThread):
+
     def __init__(self, host, port):
         super().__init__()
         self.host = host
@@ -39,7 +40,9 @@ class Server(QThread):
             soket_addr.append(addr)
 
 
-class Soket(Thread):
+class Soket(QThread):
+    signal_connect = pyqtSignal()
+
     def __init__(self, conn, serverclass):
         super().__init__()
         self.conn = conn
@@ -60,20 +63,22 @@ class Requests(QThread):
         self.conn = conn
         self.lock = Lock()
         self.soket = soket_thread  # sadece silme için ihtiyac duyduk
+        self.target = None
 
     def run(self):
         pass
 
     def select(self):
         while True:
-            select = self.conn.recv(4096).decode("utf-8")
-            if select == "connect":
-                data = self.conn.recv(2048).decode("utf-8")
+            select = pickle.loads(self.conn.recv(4096))
+            if select[0] == "connect":
+                data = pickle.loads(self.conn.recv(2048))
                 for i in soket_threads:
                     if str(i.conn.getpeername()) == data:
                         data = pickle.dumps(self.conn.getpeername())
                         i.conn.send(data)
-            elif select == "remove":
+                # Bağlantı onayı için bekleniyor
+            elif select[0] == "remove":
                 print(
                     f"{self.conn.getpeername()} adlı cihazın bağlantısı sonlandırılıyor")
                 soket_threads.remove(self.soket)
@@ -81,9 +86,14 @@ class Requests(QThread):
                 self.conn.close()
                 print("sonlandırıldı.")
                 break
-            elif select == "list":
+            elif select[0] == "list":
                 data = pickle.dumps(soket_addr)
                 self.conn.send(data)
+
+            elif select[0] == "Onaylanmadı":
+                for i in soket_threads:
+                    if str(i.conn.getpeername()) == select[1]:
+                        i.conn.send(pickle.dumps("Bağlantı izni verilmedi"))
 
 
 class ServerWindow(QWidget):
@@ -94,12 +104,10 @@ class ServerWindow(QWidget):
 
     def initui(self):
         self.start = QPushButton("Başlat")
-        self.stop = QPushButton("Durdur")
         self.log = QTextEdit("Server Başladı")
         vbox = QVBoxLayout()
         vbox.addWidget(self.log)
         vbox.addWidget(self.start)
-        vbox.addWidget(self.stop)
 
         self.start.clicked.connect(self.baslat)
 
