@@ -1,3 +1,4 @@
+import io
 from PyQt5.QtWidgets import QApplication, QWidget, QListWidget, QRadioButton, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLabel
 from PyQt5.QtCore import *
 import sys
@@ -44,6 +45,7 @@ class İzin(QThread):
                 data = pickle.loads(data)
                 if type(data) == tuple:
                     self.sinyal_connect.emit(data)
+                    # Break yaptık çünkü bağlantı durumuna göre farklı bir işlem yapabilmek için bu döngüden kurtulmalıyız.(Veri Gönderme işlemi için)
                 elif type(data) == list:
                     self.sinyal_list.emit(data)
                 elif type(data) == str:
@@ -152,6 +154,8 @@ class AnaEkran(QWidget):
             self.conn.soket.send(pickle.dumps(self.list.currentItem().text()))
         except OSError:
             pass
+        except AttributeError:
+            print("Hedef secilmedi")
 
     def exit(self):
         try:
@@ -175,6 +179,7 @@ class AnaEkran(QWidget):
             a = ("Onaylanmadı", str(a))
             b = pickle.dumps(a)
             self.conn.soket.send(b)
+            self.izin.start()
 
     def show_list(self):
         try:

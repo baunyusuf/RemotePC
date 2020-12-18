@@ -41,7 +41,6 @@ class Server(QThread):
 
 
 class Soket(QThread):
-    signal_connect = pyqtSignal()
 
     def __init__(self, conn, serverclass):
         super().__init__()
@@ -54,6 +53,15 @@ class Soket(QThread):
         a = Requests(self.conn, self)
         a.start()
         a.select()
+
+
+class QSend(QThread):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def run(self):
+        pass
 
 
 class Requests(QThread):
@@ -105,9 +113,11 @@ class ServerWindow(QWidget):
     def initui(self):
         self.start = QPushButton("Başlat")
         self.log = QTextEdit("Server Başladı")
+        self.btn = QPushButton("Btn")
         vbox = QVBoxLayout()
         vbox.addWidget(self.log)
         vbox.addWidget(self.start)
+        vbox.addWidget(self.btn)
 
         self.start.clicked.connect(self.baslat)
 
